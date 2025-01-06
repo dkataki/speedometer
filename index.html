@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeedTest App</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        canvas { display: block; margin: 20px auto; }
+    </style>
+</head>
+<body>
+    <h1>Internet Speed Test</h1>
+    <button onclick="runSpeedTest()">Check Speed</button>
+    <div>
+        <h3>Download Speed</h3>
+        <canvas id="downloadSpeedometer" width="300" height="300"></canvas>
+        <h3>Upload Speed</h3>
+        <canvas id="uploadSpeedometer" width="300" height="300"></canvas>
+    </div>
+    <div id="results"></div>
+
+    <script>
+        const downloadGauge = createSpeedometer('downloadSpeedometer', 'Download');
+        const uploadGauge = createSpeedometer('uploadSpeedometer', 'Upload');
+
+        function createSpeedometer(canvasId, label) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'gauge',
+                data: {
+                    datasets: [{
+                        value: 0,
+                        data: [0, 20, 50, 100, 200, 500, 1000], // Speed ranges
+                        backgroundColor: ['red', 'orange', 'yellow', 'green', 'blue', 'purple'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: { enabled: false },
+                        datalabels: { display: false }
+                    },
+                    title: { display: true, text: label },
+                    centerPercentage: 80,
+                    centerArea: {
+                        text: '0 Mbps',
+                        fontSize: 24
+                    }
+                }
+            });
+        }
+
+        async function runSpeedTest() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.textContent = "Running speed test... please wait!";
+            try {
+                const response = await fetch('/api/speedtest');
+                const data = await response.json();
+
+                if (data.error) {
+                    resultsDiv.textContent = `Error: ${data.error}`;
+                } else {
+                    updateSpeedometer(downloadGauge, data.download_speed_mbps);
+                    updateSpeedometer(uploadGauge, data.upload_speed_mbps);
+
+                    resultsDiv.innerHTML = `
+                        <p>Ping: ${data.ping_ms} ms</p>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.textContent = `Failed to run the test: ${error}`;
+            }
+        }
+
+        function updateSpeedometer(gauge, value) {
+            gauge.data.datasets[0].value = value;
+            gauge.options.centerArea.text = `${value.toFixed(2)} Mbps`;
+            gauge.update();
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-gauge"></script>
+</body>
+</html>
+
