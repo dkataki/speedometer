@@ -16,8 +16,8 @@ instance_type = "t2.micro"
     inline = [
       "sudo yum install -y python3",
       "sudo yum install -y git",
-      "git clone https://github.com/dkataki/spd.git",
-      "cd spd && python3 app.py"
+      "git clone https://github.com/dkataki/speedometer.git",
+      "cd speedometer && python3 app.py"
     ]
 
     connection {
